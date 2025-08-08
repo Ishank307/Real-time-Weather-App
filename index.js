@@ -2,8 +2,10 @@ import OpenAI from "openai";
 
 import readlineSync from "readline-sync";
 import dotenv from "dotenv";
+import axios, { Axios } from "axios";
 dotenv.config();
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const WEATHER_API_KEY= process.env.WEATHER_API_KEY;
 
 
 if (!GEMINI_API_KEY) {
@@ -19,14 +21,14 @@ const client = new OpenAI({
 
 
 
-function getWeatherDetails(city = '') {
-    if (city.toLowerCase() == 'ranchi') return '10°C';
-    if (city.toLowerCase() == 'hubli') return '30°C';
-    if (city.toLowerCase() == 'bengaluru') return '20°C';
-    if (city.toLowerCase() == 'bengaluru') return '20°C';
-    if (city.toLowerCase() == 'pune') return '69°C';
+// function getWeatherDetails(city = '') {
+//     if (city.toLowerCase() == 'ranchi') return '10°C';
+//     if (city.toLowerCase() == 'hubli') return '30°C';
+//     if (city.toLowerCase() == 'bengaluru') return '20°C';
+//     if (city.toLowerCase() == 'bengaluru') return '20°C';
+//     if (city.toLowerCase() == 'pune') return '69°C';
 
-}
+// }
 
 const SYSTEM_PROMPT=`You are an AI Assitant with START PLAN ACTION Observation and Output State.
 Wait for the user prompt then first plan using avaliable tools.
@@ -54,27 +56,53 @@ const user ='hey whats the weather of ranchi'
 
 
 
-async function chat() {
-    const result=await client.chat.completions.create({
-        model:"gemini-2.0-flash-exp",
-        messages:[
-            {role:'system',content: SYSTEM_PROMPT},
-            {role:'developer',content: JSON.stringify({"type":"plan","plan":"I will call getWeatherDetails for ranchi to get the weather information."})},
-            {role:'developer',content: JSON.stringify({"type":"action","function":"getWeatherDetails","input":"ranchi"})},
-            {role:'developer',content: JSON.stringify({"type":"observation","observation":"40°C"})},
+// async function chat() {
+//     const result=await client.chat.completions.create({
+//         model:"gemini-2.0-flash-exp",
+//         messages:[
+//             {role:'system',content: SYSTEM_PROMPT},
+//             {role:'developer',content: JSON.stringify({"type":"plan","plan":"I will call getWeatherDetails for ranchi to get the weather information."})},
+//             {role:'developer',content: JSON.stringify({"type":"action","function":"getWeatherDetails","input":"ranchi"})},
+//             {role:'developer',content: JSON.stringify({"type":"observation","observation":"40°C"})},
             
-            // {role:'developer',
-            //     content:'{"type":"plan","plan":"I will call getWeatherDetails for ranchi "}' 
-            // },
-            // {role:'developer',
-            //     content:'{"type":"observation","observation":"I will call getWeatherDetails for ranchi "}' 
-            // },
-            {role:'user',content: user}
+//             // {role:'developer',
+//             //     content:'{"type":"plan","plan":"I will call getWeatherDetails for ranchi "}' 
+//             // },
+//             // {role:'developer',
+//             //     content:'{"type":"observation","observation":"I will call getWeatherDetails for ranchi "}' 
+//             // },
+//             {role:'user',content: user}
             
-        ]
-    })
+//         ]
+//     })
 
-    console.log(result.choices[0].message.content);
+//     console.log(result.choices[0].message.content);
+// }
+
+
+async function getWeatherDetails(city){
+    try{
+        // const url= 'https://api.openweathermap.org/data/2.5/weather?q=CITY_NAME&appid=OPENWEATHER_API_KEY&units=metric'
+         const url = "https://api.weatherapi.com/v1/current.json";
+        const res = await axios.get(url, {
+            params: {
+                key:WEATHER_API_KEY,
+                q: city,
+                aqi: "no"
+            }});
+
+
+        const data = res.data;
+        const temp = data.current.temp_c;
+        const condition = data.current.condition.text;
+        console.log(`the weather in ${data.location.name} is ${temp} and description is ${condition}`)
+    }catch(error){
+        console.log(error);
+    }
+    
 }
 
-chat()
+const city = readlineSync.question('Enter city name: ');
+getWeatherDetails(city);
+
+// chat()
